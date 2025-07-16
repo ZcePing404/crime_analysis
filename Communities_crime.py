@@ -1,24 +1,37 @@
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from ucimlrepo import fetch_ucirepo
 
-communities_dataset = pd.read_excel("communities_and_crime.xlsx")
-communities_dataset = communities_dataset.replace("?", 0)
-df_columns = communities_dataset.columns
+# Fetch dataset
+communities_dataset = fetch_ucirepo(id=183)
 
+# Extract features and target
+df = communities_dataset.data.original
+df_clean = df.replace("?", 0)  # Replace missing values
 
-correlation_dict = {}
-useless_columns = ["state", "county", "community", "communityname", "fold", "countyname", "ViolentCrimesPerPop"]
+# Drop columns with non-predictable columns
+useless_columns = ["state", "county", "community", "communityname", "fold", "countyname"]
+data = df_clean.drop(columns=useless_columns, errors='ignore')
 
-for column in df_columns:
-    if column in useless_columns:
-        continue
-    correlation_dict.update({column: communities_dataset[column].corr(communities_dataset['ViolentCrimesPerPop']).item()})
+# Convert all columns to numeric
+data = data.apply(pd.to_numeric, errors='coerce')
 
-counter = 0
+# Compute correlation matrix
+correlation_matrix = data.corr()
 
-for key, value in correlation_dict.items():
-    if value < 0.40:
-        continue
-    print(key, " : ", value)
-    counter += 1
+# Filter the correlation which above +-0.45
+target_col = 'ViolentCrimesPerPop'
+strong_corr = correlation_matrix[target_col][correlation_matrix[target_col].abs() > 0.45]
+strong_corr_features = strong_corr.index.tolist()
 
-print("Number of features = ", counter)
+# Include only strong correlated features
+filtered_corr_matrix = data[strong_corr_features].corr()
+
+# Plot
+plt.figure(figsize=(10, 8))
+sns.heatmap(filtered_corr_matrix, cmap='coolwarm', annot=True, fmt=".2f", linewidths=0.5)
+plt.title("Correlation Matrix of Strongly Correlated Features")
+plt.tight_layout()
+plt.show()
+
