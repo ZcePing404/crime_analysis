@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from ucimlrepo import fetch_ucirepo
 
 def remove_unuseful(df):
     # Drop columns with non-predictable columns
@@ -34,10 +35,33 @@ def remove_redundant(df):
     df = df.drop(columns=to_drop)
     return df
 
-def preprocessing(df):
-    df = remove_unuseful(df)
-    df = handle_missing(df)
-    df = remove_redundant(df)
-    return df
+
+# Fetch dataset
+communities_dataset = fetch_ucirepo(id=183)
+df = pd.DataFrame(communities_dataset.data.original)
+
+print(f"Initial number of attributes: {df.shape[1]}")
+
+# Step 1: Remove unuseful attributes
+before = df.shape[1]
+df = remove_unuseful(df)
+after = df.shape[1]
+print(f"After remove unuseful features  : {after} attributes (Removed {before - after})")
+
+# Step 2: Handle missing values
+before = df.shape[1]
+df = handle_missing(df)
+after = df.shape[1]
+print(f"After handle missing values     : {after} attributes (Removed {before - after})")
+
+# Step 3: Remove redundant attributes
+before = df.shape[1]
+df = remove_redundant(df)
+after = df.shape[1]
+print(f"After remove redundant features : {after} attributes (Removed {before - after})")
+
+print(f"\nFinal number of features      : {after}")
+
+df.to_csv('./dataset/clean_dataset.csv')
 
 
