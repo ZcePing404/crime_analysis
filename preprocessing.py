@@ -22,7 +22,7 @@ def handle_missing(df):
     return df
 
 
-def remove_redundant(df, label_col='ViolentCrimesPerPop', threshold=0.85):
+def remove_multi_collinearity(df, label_col='ViolentCrimesPerPop', threshold=0.85):
     df = df.copy()
 
     # Compute correlation matrix
@@ -80,13 +80,14 @@ df = handle_missing(df)
 after = df.shape[1]
 print(f"\nAfter handle missing values     : {after} attributes (Removed {before - after})")
 
-# Step 3: Remove redundant attributes
+# Step 3: Remove remove multi-collinearity attiribute
 before = df.shape[1]
-df = remove_redundant(df)
+df = remove_multi_collinearity(df)
 after = df.shape[1]
 print(f"\nAfter remove redundant features : {after} attributes (Removed {before - after})")
 
 print(f"\nFinal number of features        : {after}")
+print(df.columns.tolist())
 
 df.to_csv('./dataset/clean_dataset.csv', index=False)
 

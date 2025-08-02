@@ -10,8 +10,10 @@ target_col = 'ViolentCrimesPerPop'
 # Calculate correlation with target (excluding the target itself)
 correlation_matrix = clean_df.corr()[target_col].drop(target_col)
 
+filtered_correlation = correlation_matrix[correlation_matrix.abs() > 0.25]
 # Convert to DataFrame and sort
-correlation_df = correlation_matrix.sort_values()
+correlation_df = filtered_correlation.sort_values()
+print(correlation_df.shape[0])
 
 # Plot
 plt.figure(figsize=(15, 6))  # WIDE plot to fit all 128 attribute names
