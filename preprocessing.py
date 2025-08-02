@@ -22,46 +22,72 @@ def handle_missing(df):
     return df
 
 
-def remove_redundant(df):
-    abs_corr_matrix = df.corr().abs()  # Take absolute correlation
+def remove_redundant(df, label_col='ViolentCrimesPerPop', threshold=0.85):
+    df = df.copy()
 
-    # Creates the upper triangle of the correlation matrix — everything below the diagonal (including the diagonal) is turned into NaN
-    upper = abs_corr_matrix.where(
-        np.triu(np.ones(abs_corr_matrix.shape), k=1).astype(bool)
-    )
-    # Find columns with high correlation (e.g., > 0.9)
-    to_drop = [column for column in upper.columns if any(upper[column] > 0.9)]
+    # Compute correlation matrix
+    corr_matrix = df.drop(columns=[label_col]).corr()
+    abs_corr_matrix = corr_matrix.abs()
 
-    df = df.drop(columns=to_drop)
-    return df
+    # Find all highly correlated feature pairs
+    abs_corr_pairs = abs_corr_matrix.unstack().sort_values(ascending=False)
+    high_corr = [(a, b) for a, b in abs_corr_pairs.index if a != b and abs_corr_pairs[(a, b)] > threshold]
+    
+    removed = set()
+    to_remove = []
+
+    print("Highly correlated pairs (corr > {}):\n".format(threshold))
+    for a, b in high_corr:
+        if a in removed or b in removed:
+            continue  # Skip if already removed
+
+        # Compare correlation with target
+        a_corr = df[[a, label_col]].corr().iloc[0, 1]
+        b_corr = df[[b, label_col]].corr().iloc[0, 1]
+        # Check if both is same neg or pos
+        if (a_corr * b_corr > 0):
+            # Keep the one more related to the label
+            if abs(a_corr) < abs(b_corr):
+                to_remove.append(a)
+                removed.add(a)
+                print(f"Removing '{a}' (corr with target = {a_corr:.4f}) highly correlated with '{b}' (corr with target = {b_corr:.4f}) [corr = {abs_corr_pairs[(a, b)]:.4f}]")
+            else:
+                to_remove.append(b)
+                removed.add(b)
+                print(f"Removing '{b}' (corr with target = {b_corr:.4f}) highly correlated with '{a}' (corr with target = {a_corr:.4f}) [corr = {abs_corr_pairs[(a, b)]:.4f}]")
+
+    # Return a new DataFrame with selected features
+    cleaned_df = df.drop(columns=to_remove)
+    return cleaned_df
+
 
 
 # Fetch dataset
 communities_dataset = fetch_ucirepo(id=183)
 df = pd.DataFrame(communities_dataset.data.original)
 
-print(f"Initial number of attributes: {df.shape[1]}")
+print(f"\n\nInitial number of attributes: {df.shape[1]}")
 
 # Step 1: Remove unuseful attributes
 before = df.shape[1]
 df = remove_unuseful(df)
 after = df.shape[1]
-print(f"After remove unuseful features  : {after} attributes (Removed {before - after})")
+print(f"\nAfter remove unuseful features  : {after} attributes (Removed {before - after})")
 
 # Step 2: Handle missing values
 before = df.shape[1]
 df = handle_missing(df)
 after = df.shape[1]
-print(f"After handle missing values     : {after} attributes (Removed {before - after})")
+print(f"\nAfter handle missing values     : {after} attributes (Removed {before - after})")
 
 # Step 3: Remove redundant attributes
 before = df.shape[1]
 df = remove_redundant(df)
 after = df.shape[1]
-print(f"After remove redundant features : {after} attributes (Removed {before - after})")
+print(f"\nAfter remove redundant features : {after} attributes (Removed {before - after})")
 
-print(f"\nFinal number of features      : {after}")
+print(f"\nFinal number of features        : {after}")
 
-df.to_csv('./dataset/clean_dataset.csv')
+df.to_csv('./dataset/clean_dataset.csv', index=False)
 
 
