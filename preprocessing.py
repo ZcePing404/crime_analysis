@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import correlation_coefficient as cc
 from ucimlrepo import fetch_ucirepo
 
 def remove_unuseful(df):
@@ -68,27 +69,33 @@ df = pd.DataFrame(communities_dataset.data.original)
 
 print(f"\n\nInitial number of attributes: {df.shape[1]}")
 
-# Step 1: Remove unuseful attributes
+# Remove unuseful attributes
 before = df.shape[1]
 df = remove_unuseful(df)
 after = df.shape[1]
 print(f"\nAfter remove unuseful features  : {after} attributes (Removed {before - after})")
 
-# Step 2: Handle missing values
+# Handle missing values
 before = df.shape[1]
 df = handle_missing(df)
 after = df.shape[1]
 print(f"\nAfter handle missing values     : {after} attributes (Removed {before - after})")
 
-# Step 3: Remove remove multi-collinearity attiribute
+# Remove multi-collinearity attiribute
 before = df.shape[1]
 df = remove_multi_collinearity(df)
 after = df.shape[1]
 print(f"\nAfter remove redundant features : {after} attributes (Removed {before - after})")
 
+df.to_csv('./dataset/clean_dataset.csv', index=False)
+
+# Select only highly related features
+before = df.shape[1]
+df = cc.get_highly_correlated_features(df, threshold=0.6)
+after = df.shape[1]
 print(f"\nFinal number of features        : {after}")
 print(df.columns.tolist())
 
-df.to_csv('./dataset/clean_dataset.csv', index=False)
+df.to_csv('./dataset/final_dataset.csv', index=False)
 
 
