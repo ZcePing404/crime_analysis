@@ -17,65 +17,67 @@ def load_dataset():
     # Clean column names
     df.columns = df.columns.str.strip()
 
-    # Apply SMOGN to training set only
-    resampled_df = smogn.smoter(data=df, y='ViolentCrimesPerPop')
+    # # Apply SMOGN to training set only
+    # resampled_df = smogn.smoter(data=df, y='ViolentCrimesPerPop')
     
     # Separate X and Y
-    Y = resampled_df['ViolentCrimesPerPop']
-    X = resampled_df.drop('ViolentCrimesPerPop', axis=1)
+    Y = df['ViolentCrimesPerPop']
+    X = df.drop('ViolentCrimesPerPop', axis=1)
 
     return X, Y
 
 
-def regression_cross_validation(algorithm, param_grid, X, Y):
-    kf = KFold(n_splits=10, shuffle=True, random_state=42)
 
-    # Store results
-    mse_scores = []
-    rmse_scores = []
-    mae_scores = []
-    r2_scores = []
-
-    # GridSearch for best model on the whole training set
-    grid = GridSearchCV(algorithm, param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
+def hyperparameter_tuning(X, Y, model, param_grid, target='neg_mean_squared_error'):
+    grid = GridSearchCV(model, param_grid, scoring=target, cv=5, n_jobs=-1, verbose=3)
     grid.fit(X, Y)
-    best_model = grid.best_estimator_
-
-    for train_idx, test_idx in kf.split(X):
-        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-        Y_train, Y_test = Y.iloc[train_idx], Y.iloc[test_idx]
-
-        model_cv = clone(best_model)
-        model_cv.fit(X_train, Y_train)
-        Y_pred = model_cv.predict(X_test)
-
-        # Calculate metrics
-        mse_scores.append(mean_squared_error(Y_test, Y_pred))
-        rmse_scores.append(root_mean_squared_error(Y_test, Y_pred))
-        mae_scores.append(mean_absolute_error(Y_test, Y_pred))
-        r2_scores.append(r2_score(Y_test, Y_pred))
-
-    # Report mean results
-    return model_cv, {
-        'MSE': np.mean(mse_scores),
-        'RMSE': np.mean(mse_scores),
-        'MAE': np.mean(mae_scores),
-        'R2': np.mean(r2_scores)
-    }
+    return grid
 
 
+# def regression_cross_validation(algorithm, param_grid, X, Y):
+#     kf = KFold(n_splits=10, shuffle=True, random_state=42)
+
+#     # Store results
+#     mse_scores = []
+#     rmse_scores = []
+#     mae_scores = []
+#     r2_scores = []
+
+#     # GridSearch for best model on the whole training set
+#     grid = GridSearchCV(algorithm, param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
+#     grid.fit(X, Y)
+#     best_model = grid.best_estimator_
+
+#     for train_idx, test_idx in kf.split(X):
+#         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+#         Y_train, Y_test = Y.iloc[train_idx], Y.iloc[test_idx]
+
+#         model_cv = clone(best_model)
+#         model_cv.fit(X_train, Y_train)
+#         Y_pred = model_cv.predict(X_test)
+
+#         # Calculate metrics
+#         mse_scores.append(mean_squared_error(Y_test, Y_pred))
+#         rmse_scores.append(root_mean_squared_error(Y_test, Y_pred))
+#         mae_scores.append(mean_absolute_error(Y_test, Y_pred))
+#         r2_scores.append(r2_score(Y_test, Y_pred))
+
+#     # Report mean results
+#     return model_cv, {
+#         'MSE': np.mean(mse_scores),
+#         'RMSE': np.mean(mse_scores),
+#         'MAE': np.mean(mae_scores),
+#         'R2': np.mean(r2_scores)
+#     }
 
 
-def split_data(algorithm, param_grid, X, Y, size):
+
+
+def split_data(X, Y, size):
     print("\n\nSpliting Data...")
     # Train-test split
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=size, random_state=42)
-    
-    # GridSearchCV setup
-    grid = GridSearchCV(estimator=algorithm, param_grid=param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1, verbose=2)
-    grid.fit(X_train, Y_train)
-    best_model = grid.best_estimator_
-    return best_model, X_test, Y_test
+    return X_train, Y_train, X_test, Y_test
 
 
 
