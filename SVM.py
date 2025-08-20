@@ -9,8 +9,8 @@ if __name__ == "__main__":
 
     # Define the parameter grid for tuning
     param_grid = {
-        'C': [0.1, 1, 10, 100],
-        'epsilon': [0.01, 0.1, 0.2],  
+        'C': [0.1, 0.5, 1, 5, 10, 50, 100],
+        'epsilon': [0.005, 0.01, 0.05, 0.1, 0.2],  
         'kernel': ['linear', 'rbf'], 
         'gamma': ['scale', 'auto']  
     }

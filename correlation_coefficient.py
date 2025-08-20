@@ -3,13 +3,13 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def get_highly_correlated_features(df, target_col='ViolentCrimesPerPop', threshold=0.6):
+def get_highly_correlated_features(df, threshold, target_col='ViolentCrimesPerPop',):
     # Calculate correlation
     correlation_matrix = df.corr()
-    target_corr = correlation_matrix[target_col].abs()
+    target_corr = correlation_matrix[target_col].abs().sort_values()
 
     # Filter columns with high correlation (including the target itself)
-    high_corr_features = target_corr[target_corr > threshold].drop(target_col).index.tolist()
+    high_corr_features = target_corr[target_corr >= threshold].drop(target_col).index.tolist()
 
     print("Selected features:", high_corr_features)
 

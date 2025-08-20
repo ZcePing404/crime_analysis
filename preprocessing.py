@@ -91,7 +91,7 @@ df.to_csv('./dataset/clean_dataset.csv', index=False)
 
 # Select only highly related features
 before = df.shape[1]
-df = cc.get_highly_correlated_features(df, threshold=0.6)
+df = cc.get_highly_correlated_features(df, threshold=0.55)
 after = df.shape[1]
 print(f"\nFinal number of features        : {after}")
 print(df.columns.tolist())
