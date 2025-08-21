@@ -29,46 +29,55 @@ def load_dataset():
 
 
 def hyperparameter_tuning(X, Y, model, param_grid, target='neg_mean_squared_error'):
-    grid = GridSearchCV(model, param_grid, scoring=target, cv=5, n_jobs=-1, verbose=3)
+    grid = GridSearchCV(model, param_grid, scoring=target, cv=5, verbose=3)
     grid.fit(X, Y)
     return grid
 
 
-# def regression_cross_validation(algorithm, param_grid, X, Y):
-#     kf = KFold(n_splits=10, shuffle=True, random_state=42)
 
-#     # Store results
-#     mse_scores = []
-#     rmse_scores = []
-#     mae_scores = []
-#     r2_scores = []
+def model_evaluation(pipeline, param_grid, X, Y):
+    # Split data for 80/20
+    X_train_82, Y_train_82, X_test_82, Y_test_82 = split_data(X, Y, 0.2)
+    model_82 = hyperparameter_tuning(X_train_82, Y_train_82, pipeline, param_grid)
 
-#     # GridSearch for best model on the whole training set
-#     grid = GridSearchCV(algorithm, param_grid, cv=5, scoring='neg_mean_squared_error', n_jobs=-1)
-#     grid.fit(X, Y)
-#     best_model = grid.best_estimator_
+    # Split data for 70/30
+    X_train_73, Y_train_73, X_test_73, Y_test_73 = split_data(X, Y, 0.3)
+    model_73 = hyperparameter_tuning(X_train_73, Y_train_73, pipeline, param_grid)
 
-#     for train_idx, test_idx in kf.split(X):
-#         X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-#         Y_train, Y_test = Y.iloc[train_idx], Y.iloc[test_idx]
+    #Prepare models and potential splits
+    splits = [
+        {"label": "80/20", "model": model_82}
+    ]
 
-#         model_cv = clone(best_model)
-#         model_cv.fit(X_train, Y_train)
-#         Y_pred = model_cv.predict(X_test)
+    # only add 70/30 if its best_params differ
+    if model_82.best_params_ != model_73.best_params_:
+        splits.append({"label": "70/30", "model": model_73})
 
-#         # Calculate metrics
-#         mse_scores.append(mean_squared_error(Y_test, Y_pred))
-#         rmse_scores.append(root_mean_squared_error(Y_test, Y_pred))
-#         mae_scores.append(mean_absolute_error(Y_test, Y_pred))
-#         r2_scores.append(r2_score(Y_test, Y_pred))
+    # Test each split’s model and collect results
+    results = {}
+    for item in splits:
+        lbl   = item["label"]
+        mdl   = item["model"].best_estimator_
+        results[lbl] = test_model(mdl, X, Y)
 
-#     # Report mean results
-#     return model_cv, {
-#         'MSE': np.mean(mse_scores),
-#         'RMSE': np.mean(mse_scores),
-#         'MAE': np.mean(mae_scores),
-#         'R2': np.mean(r2_scores)
-#     }
+    # Select the best model by MSE
+    best_label = min(results, key=lambda k: results[k]["MSE"])
+    selected_model = model_82 if best_label == "80/20" else model_73
+
+    # Display results for each split
+    for item in splits:
+        lbl = item["label"]
+        clf = item["model"].best_estimator_
+
+        print(f"\n\n10-Fold Cross Validation with {lbl} training data")
+        print("-" * 81)
+        print("Classifier : ", clf)
+        print("-" * 81)
+        display_result(results[lbl])
+
+    print(f"\nSelected split: {best_label} (MSE = {results[best_label]['MSE']:.4f})")
+    return selected_model
+
 
 
 
@@ -81,21 +90,38 @@ def split_data(X, Y, size):
 
 
 
-def test_model(model, X_test, Y_test):
-    # Predict on test set
-    Y_pred = model.predict(X_test)
+def test_model(model, X, Y):
+    kf = KFold(n_splits=10, shuffle=True, random_state=42)
 
-    # Calculate regression metrics
-    mse = mean_squared_error(Y_test, Y_pred)
-    rmse = root_mean_squared_error(Y_test, Y_pred)
-    mae = mean_absolute_error(Y_test, Y_pred)
-    r2 = r2_score(Y_test, Y_pred)
+    # Store results
+    mse_scores = []
+    rmse_scores = []
+    mae_scores = []
+    r2_scores = []
+    Y_true_all = []
+    Y_pred_all = []
+
+    for train_index, test_index in kf.split(X, Y):
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        Y_train, Y_test = Y.iloc[train_index], Y.iloc[test_index]
+
+        model.fit(X_train, Y_train)
+        Y_pred = model.predict(X_test)
+
+        # append results
+        Y_true_all.extend(Y_test)
+        Y_pred_all.extend(Y_pred)
+        # Calculate metrics
+        mse_scores.append(mean_squared_error(Y_test, Y_pred))
+        rmse_scores.append(root_mean_squared_error(Y_test, Y_pred))
+        mae_scores.append(mean_absolute_error(Y_test, Y_pred))
+        r2_scores.append(r2_score(Y_test, Y_pred))
 
     return {
-        'MSE': mse,
-        'RMSE': rmse,
-        'MAE': mae,
-        'R2': r2
+        'MSE': np.mean(mse_scores),
+        'RMSE': np.mean(mse_scores),
+        'MAE': np.mean(mae_scores),
+        'R2': np.mean(r2_scores)
     }
 
     
@@ -107,10 +133,10 @@ def display_result(result):
     print(f"R2: {result['R2']:.4f}")
 
 
-def save_model(model):
-    # Save model
+def save_model(model, file_name):
+    # Save model and vectorizer
     os.makedirs('./model', exist_ok=True)
-    with open('./model/model.pkl', 'wb') as f:
+    with open(f'./model/{file_name}.pkl', 'wb') as f:
         pickle.dump((model), f)
 
     print("Model saved successfully!")

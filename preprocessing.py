@@ -66,6 +66,7 @@ def remove_multi_collinearity(df, label_col='ViolentCrimesPerPop', threshold=0.8
 # Fetch dataset
 communities_dataset = fetch_ucirepo(id=183)
 df = pd.DataFrame(communities_dataset.data.original)
+original_df = df.copy()
 
 print(f"\n\nInitial number of attributes: {df.shape[1]}")
 
@@ -93,9 +94,9 @@ df.to_csv('./dataset/clean_dataset.csv', index=False)
 before = df.shape[1]
 df = cc.get_highly_correlated_features(df, threshold=0.55)
 after = df.shape[1]
+
 print(f"\nFinal number of features        : {after}")
 print(df.columns.tolist())
-
 df.to_csv('./dataset/final_dataset.csv', index=False)
 
 
