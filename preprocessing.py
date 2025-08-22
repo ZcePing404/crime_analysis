@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     # Select only highly related features
     before = df.shape[1]
-    df = cc.get_highly_correlated_features(df, threshold=0.2)
+    df = cc.get_highly_correlated_features(df, threshold=0.15)
     after = df.shape[1]
     print(f"\nFinal number of features        : {after}")
     print(df.columns.tolist())

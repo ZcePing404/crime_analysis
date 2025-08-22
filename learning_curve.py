@@ -1,6 +1,6 @@
 from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
-from sklearn.svm import SVR
+from sklearn.svm import SVC
 from sklearn.model_selection import LearningCurveDisplay
 import numpy as np
 import train_model
@@ -8,7 +8,7 @@ import train_model
 
 def plot_learning_curve(model, X, Y, model_name):
     X, Y = shuffle(X, Y, random_state=0)
-    LearningCurveDisplay.from_estimator(estimator=model,X=X,y=Y,train_sizes=np.linspace(0.1, 1.0, 10),cv=10,scoring='neg_mean_squared_error',n_jobs=-1)
+    LearningCurveDisplay.from_estimator(estimator=model,X=X,y=Y,train_sizes=np.linspace(0.1, 1.0, 10),cv=10,scoring='accuracy')
 
     plt.grid()
     plt.title(f'Learning Curve of {model_name}')
@@ -25,12 +25,11 @@ if __name__ == "__main__":
     model_and_params = [
         {
             'name': 'SVM',
-            'model': SVR(),
+            'model': SVC(),
             'param_grid': {
-                'C': [0.1, 0.5, 1, 5, 10, 50, 100],
-                'epsilon': [0.005, 0.01, 0.05, 0.1, 0.2],  
-                'kernel': ['linear', 'rbf'], 
-                'gamma': ['scale', 'auto']  
+                'C': [0.2, 0.3, 0.4, 0.5, 0.6, 0.7], 
+                'kernel': ['linear', 'poly', 'rbf'], 
+                'gamma': ['scale', 'auto']
             }
         }
         # other models
