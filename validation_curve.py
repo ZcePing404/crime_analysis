@@ -26,10 +26,10 @@ if __name__ == "__main__":
     models = [
         {
             'name': 'SVR',
-            'model': SVR(C=0.2, epsilon=0.05),
+            'model': SVR(C=0.12, epsilon=0.06),
             'params': {
                 'C': np.arange(0.01, 0.2, 0.01),
-                'epsilon': np.arange(0.01, 0.3, 0.005)
+                'epsilon': np.arange(0.01, 0.2, 0.005)
             }
         }
     ]

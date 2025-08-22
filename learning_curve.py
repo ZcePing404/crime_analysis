@@ -27,10 +27,10 @@ if __name__ == "__main__":
             'name': 'SVM',
             'model': SVR(),
             'param_grid': {
-                'C': [0.1, 0.12, 0.14],
-                'epsilon': [0.02, 0.04, 0.06],  
-                'kernel': ['linear', 'rbf'], 
-                'gamma': ['scale', 'auto']  
+                'C': [0.08, 0.1, 0.12, 0.14],
+                'epsilon': [0.02, 0.04, 0.06, 0.08],
+                'kernel': ['linear', 'rbf'],
+                'gamma': ['scale', 'auto']
             }
         }
         # other models
