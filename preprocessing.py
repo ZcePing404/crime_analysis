@@ -1,13 +1,9 @@
 import pandas as pd
 import numpy as np
 import correlation_coefficient as cc
+from scipy.stats import zscore
 from ucimlrepo import fetch_ucirepo
 
-def remove_unuseful(df):
-    # Drop columns with non-predictable columns
-    useless_columns = ["state", "county", "community", "communityname", "fold", "countyname"]
-    df = df.drop(columns=useless_columns, errors='ignore')
-    return df
 
 def handle_missing(df):
     # Drop columns with more than 50% missing values
@@ -22,8 +18,12 @@ def handle_missing(df):
     df = df.fillna(df.mean())
     return df
 
+def normalize(df, cols_to_normalize=['time','age','wtkg','karnof','preanti','cd40','cd420','cd80','cd820']):
+    # Apply Z-score normalization to selected columns
+    df[cols_to_normalize] = df[cols_to_normalize].apply(zscore)
+    return df
 
-def remove_multi_collinearity(df, label_col='ViolentCrimesPerPop', threshold=0.85):
+def remove_multi_collinearity(df, label_col='cid', threshold=0.85):
     df = df.copy()
 
     # Compute correlation matrix
@@ -62,41 +62,39 @@ def remove_multi_collinearity(df, label_col='ViolentCrimesPerPop', threshold=0.8
     return cleaned_df
 
 
+if __name__ == "__main__":
+    # Fetch dataset
+    aids_clinical_trials_group_study_175 = fetch_ucirepo(id=890) 
+    df = pd.DataFrame(aids_clinical_trials_group_study_175.data.original)
+    df.to_csv('./dataset/original.csv', index=False)
 
-# Fetch dataset
-communities_dataset = fetch_ucirepo(id=183)
-df = pd.DataFrame(communities_dataset.data.original)
-original_df = df.copy()
+    print(f"\n\nInitial number of attributes: {df.shape[1]}")
 
-print(f"\n\nInitial number of attributes: {df.shape[1]}")
+    # Handle missing values
+    before = df.shape[1]
+    df = handle_missing(df)
+    after = df.shape[1]
+    print(f"\nAfter handle missing values     : {after} attributes (Removed {before - after})")
 
-# Remove unuseful attributes
-before = df.shape[1]
-df = remove_unuseful(df)
-after = df.shape[1]
-print(f"\nAfter remove unuseful features  : {after} attributes (Removed {before - after})")
+    # Normalize continuous data
+    df = normalize(df)
+    print(f"\nData Normalized.")
 
-# Handle missing values
-before = df.shape[1]
-df = handle_missing(df)
-after = df.shape[1]
-print(f"\nAfter handle missing values     : {after} attributes (Removed {before - after})")
+    # Remove multi-collinearity attiribute
+    before = df.shape[1]
+    df = remove_multi_collinearity(df)
+    after = df.shape[1]
+    print(f"\nAfter remove redundant features : {after} attributes (Removed {before - after})")
 
-# Remove multi-collinearity attiribute
-before = df.shape[1]
-df = remove_multi_collinearity(df)
-after = df.shape[1]
-print(f"\nAfter remove redundant features : {after} attributes (Removed {before - after})")
+    df.to_csv('./dataset/clean_dataset.csv', index=False)
 
-df.to_csv('./dataset/clean_dataset.csv', index=False)
+    # Select only highly related features
+    before = df.shape[1]
+    df = cc.get_highly_correlated_features(df, threshold=0.2)
+    after = df.shape[1]
+    print(f"\nFinal number of features        : {after}")
+    print(df.columns.tolist())
 
-# Select only highly related features
-before = df.shape[1]
-df = cc.get_highly_correlated_features(df, threshold=0.55)
-after = df.shape[1]
-
-print(f"\nFinal number of features        : {after}")
-print(df.columns.tolist())
-df.to_csv('./dataset/final_dataset.csv', index=False)
+    df.to_csv('./dataset/final_dataset.csv', index=False)
 
 

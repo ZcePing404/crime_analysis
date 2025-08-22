@@ -3,7 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-def get_highly_correlated_features(df, threshold, target_col='ViolentCrimesPerPop',):
+def get_highly_correlated_features(df, threshold, target_col='cid',):
     # Calculate correlation
     correlation_matrix = df.corr()
     target_corr = correlation_matrix[target_col].abs().sort_values()
@@ -23,24 +23,27 @@ def get_highly_correlated_features(df, threshold, target_col='ViolentCrimesPerPo
 
 
 if __name__ == "__main__":
-    # Export cleaned dataset
+    # Load dataset
     clean_df = pd.read_csv('./dataset/clean_dataset.csv')
-    target_col = 'ViolentCrimesPerPop'
-    # Calculate correlation with target (excluding the target itself)
-    correlation_matrix = clean_df.corr()[target_col].drop(target_col)
 
-    # Convert to DataFrame and sort
-    correlation_df = correlation_matrix.sort_values()
+    # Compute correlation matrix (all columns)
+    correlation_matrix = clean_df.corr()
 
-    # Plot
-    plt.figure(figsize=(15, 6))  # WIDE plot to fit all 128 attribute names
+    # Plot heatmap
+    plt.figure(figsize=(15, 12))  # adjust size for readability
     sns.set_style("whitegrid")
-    plt.bar(correlation_df.index, correlation_df.values, color='skyblue', edgecolor='skyblue')
 
-    plt.xticks(rotation=90, fontsize=8)  # Rotate attribute names for visibility
-    plt.xlabel("Variable Name", fontsize=14, fontweight='bold', labelpad=15)
-    plt.ylabel("Correlation Coefficient", fontsize=14, fontweight='bold', labelpad=5)
-    plt.title(f'Correlation of Each Attribute with {target_col}')
-    plt.axhline(0, color='gray', linestyle='--')  # horizontal line at 0
+    heatmap = sns.heatmap(
+        correlation_matrix,
+        cmap="coolwarm",   # color scheme (blue-red)
+        annot=False,       # set True if you want the values written
+        fmt=".2f",         # number format
+        linewidths=0.5,    # grid lines
+        cbar=True,  # show color bar
+        vmin=-1,   # force lower bound
+        vmax=1     # force upper bound
+    )
+
+    plt.title("Correlation Heatmap of All Attributes", fontsize=16, fontweight='bold', pad=20)
     plt.tight_layout()
-    plt.savefig("graph/correlation_coefficient.png", dpi=300, bbox_inches='tight')  # save before plt.show()
+    plt.savefig("graph/correlation_coefficient.png", dpi=300, bbox_inches='tight')

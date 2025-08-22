@@ -102,7 +102,7 @@ print(f"After removing outliers         : {after_rows} rows (Removed {before_row
 print(f"\nFinal number of features      : {after}")
 print(df.columns.tolist())
 
-df.to_csv('./dataset/clean_dataset_without_outlier.csv')
+# df.to_csv('./dataset/clean_dataset_without_outlier.csv')
 
 sns.boxplot(data=df_before_outlier_removal['population'])
 plt.title('Before Removing Outliers')
