@@ -1,10 +1,9 @@
 import streamlit as st
 import pickle
 import numpy as np
-
+import joblib
 # Load the trained model
-with open("model/DecisionTree_regression.pkl", "rb") as f:
-    model = pickle.load(f)
+model = joblib.load("model/DecisionTree_regression.pkl")
 
 st.title("Decision Tree Model Deployment 🚀")
 
