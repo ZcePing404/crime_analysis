@@ -1,7 +1,6 @@
 import streamlit as st
 import pickle
 import numpy as np
-import joblib
 # Load the trained model
 
 model = pickle.load(open("model/DecisionTree_regression.pkl", "rb"))
