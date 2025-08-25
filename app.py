@@ -1,6 +1,12 @@
 import streamlit as st
 import pickle
 import numpy as np
+import sys
+import sklearn
+import numpy
+print("Python version:", sys.version)
+print("scikit-learn version:", sklearn.__version__)
+print("numpy version:", numpy.__version__)
 # Load the trained model
 
 model = pickle.load(open("model/DecisionTree_regression.pkl", "rb"))
