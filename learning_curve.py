@@ -1,6 +1,7 @@
 from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 from sklearn.svm import SVR
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import LearningCurveDisplay
 import numpy as np
 import train_model
@@ -31,6 +32,17 @@ if __name__ == "__main__":
                 'epsilon': [0.02, 0.04, 0.06],  
                 'kernel': ['linear', 'rbf'], 
                 'gamma': ['scale', 'auto']  
+            }
+        },
+        {
+            'name': 'DecisionTree',
+            'model': DecisionTreeRegressor(),
+            'param_grid': {
+                'criterion': ['squared_error', 'friedman_mse', 'absolute_error'],  
+                'max_depth': [2, 3, 4],
+                'min_samples_split': [7, 8, 9],
+                'min_samples_leaf': [2, 3, 4],
+                'max_features': [None, 'sqrt', 'log2'],
             }
         }
         # other models

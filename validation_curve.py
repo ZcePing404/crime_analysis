@@ -1,6 +1,7 @@
 from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 from sklearn.svm import SVR
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import ValidationCurveDisplay
 import numpy as np
 import train_model
@@ -30,6 +31,15 @@ if __name__ == "__main__":
             'params': {
                 'C': np.arange(0.01, 0.2, 0.01),
                 'epsilon': np.arange(0.01, 0.3, 0.005)
+            }
+        },
+        {
+            'name': 'DecisionTree',
+            'model':  DecisionTreeRegressor(max_depth=5, min_samples_leaf=7, min_samples_split=7, max_features='log2'),
+            'params': {
+                'max_depth': np.arange(1, 6, 1),            # tree depth from 1 to 20
+                'min_samples_split': np.arange(5, 12, 1),    # node split requirement
+                'min_samples_leaf': np.arange(1, 10, 1),     # leaf size
             }
         }
     ]
