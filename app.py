@@ -3,7 +3,8 @@ import pickle
 import numpy as np
 import joblib
 # Load the trained model
-model = joblib.load("model/DecisionTree_regression.pkl")
+
+model = pickle.load(open("model/DecisionTree_regression.pkl", "rb"))
 
 st.title("Decision Tree Model Deployment 🚀")
 
