@@ -1,5 +1,3 @@
-import numpy as np
-from sklearn.model_selection import cross_val_score
 import learning_curve
 import train_model
 from sklearn.svm import SVR
