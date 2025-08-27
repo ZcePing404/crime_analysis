@@ -10,16 +10,33 @@ def remove_unuseful(df):
     return df
 
 def handle_missing(df):
-    # Drop columns with more than 50% missing values
+    # Replace "?" with NaN
     df = df.replace("?", np.nan)
 
     # Convert all columns to numeric
     df = df.apply(pd.to_numeric, errors='coerce')
 
-    df = df.loc[:, df.isnull().mean() < 0.5]
-    
+    # Identify columns with more than 50% missing values
+    cols_to_drop = df.columns[df.isnull().mean() >= 0.5].tolist()
+
+    # Drop those columns
+    df = df.drop(columns=cols_to_drop)
+    if cols_to_drop:
+        print("Dropped columns (more than 50% missing):")
+        for col in cols_to_drop:
+            print(f"  - {col}")
+
+    # Identify columns that still have missing values
+    cols_with_missing = df.columns[df.isnull().any()].tolist()
+
     # Fill remaining missing values with mean
     df = df.fillna(df.mean())
+
+    if cols_with_missing:
+        print("\nColumns filled with mean:")
+        for col in cols_with_missing:
+            print(f"  - {col}")
+
     return df
 
 
@@ -37,7 +54,7 @@ def remove_multi_collinearity(df, label_col='ViolentCrimesPerPop', threshold=0.8
     removed = set()
     to_remove = []
 
-    print("Highly correlated pairs (corr > {}):\n".format(threshold))
+    print("\n\nHighly correlated pairs (corr > {}):\n".format(threshold))
     for a, b in high_corr:
         if a in removed or b in removed:
             continue  # Skip if already removed
