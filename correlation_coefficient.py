@@ -3,6 +3,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
+from sklearn.linear_model import LassoCV
+from sklearn.preprocessing import StandardScaler
 
 
 def get_highly_correlated_features(df, threshold, target_col='ViolentCrimesPerPop',):
@@ -22,15 +24,55 @@ def get_highly_correlated_features(df, threshold, target_col='ViolentCrimesPerPo
 
 
 
+def filter_multicollinearity(df, target_col="ViolentCrimesPerPop"):
+    # Separate features and target
+    X = df.drop(columns=[target_col])
+    Y = df[target_col]
+
+    # Fit Lasso with cross-validation to find best alpha
+    lasso = LassoCV(cv=10, random_state=42).fit(X, Y)
+
+    # Get coefficients
+    coef = pd.Series(lasso.coef_, index=X.columns)
+
+    # Display results
+    print("\n\nBest alpha (λ) chosen by CV:", lasso.alpha_)
+    print("\nNumber of selected features (non-zero coef):", sum(coef != 0))
+    print("Number of removed features:", sum(coef == 0))
+
+    print("\nRemoved Features:")
+    print(coef[coef == 0].index.tolist())
+
+    # Sort coefficients
+    coef_sorted = coef.sort_values()
+
+    # Split into chunks
+    chunk_size = 51
+    chunks = [coef_sorted[i:i+chunk_size] for i in range(0, len(coef_sorted), chunk_size)]
+
+    for idx, chunk in enumerate(chunks):
+        plt.figure(figsize=(14,6))
+        chunk_colors = ["skyblue" if c != 0 else "lightgray" for c in chunk]
+        chunk.plot(kind="bar", color=chunk_colors)
+
+        plt.axhline(0, color="black", linewidth=1)
+        plt.title(f"Lasso Regression Feature Coefficients)")
+        plt.ylabel("Coefficient Value")
+        plt.xlabel("Features")
+        plt.tight_layout()
+        plt.savefig(f"graph/LassoRegression_{idx+1}.png", dpi=300, bbox_inches='tight')
+        plt.close()
+
+    # Keep only top 7 features by absolute coefficient value
+    top_features = coef.abs().sort_values(ascending=False).head(9).index.tolist()
+    filtered_df = df[top_features + [target_col]]
+
+    return filtered_df
 
 
-if __name__ == "__main__":
-    # Export cleaned dataset
-    clean_df = pd.read_csv('./dataset/clean_dataset.csv')
-    target_col = 'ViolentCrimesPerPop'
-
+def plot_corr_coe(df, target_col = 'ViolentCrimesPerPop'):
     # Calculate correlation with target (excluding the target itself)
-    correlation_matrix = clean_df.corr()[target_col].drop(target_col)
+    correlation_matrix = df.corr()[target_col].drop(target_col)
 
     # Convert to DataFrame and sort
     correlation_df = correlation_matrix.sort_values()
@@ -43,7 +85,7 @@ if __name__ == "__main__":
     # Plot
     fig, ax = plt.subplots(figsize=(15, 6))  
     sns.set_style("whitegrid")
-    bars = ax.bar(correlation_df.index, correlation_df.values, color=colors)
+    ax.bar(correlation_df.index, correlation_df.values, color=colors)
 
     ax.set_xticklabels(correlation_df.index, rotation=90, fontsize=8)  
     ax.set_xlabel("Variable Name", fontsize=14, fontweight='bold', labelpad=15)
@@ -59,3 +101,9 @@ if __name__ == "__main__":
 
     plt.tight_layout()
     plt.savefig("graph/correlation_coefficient.png", dpi=300, bbox_inches='tight')
+
+
+
+if __name__ == "__main__":
+    df = pd.read_csv('./dataset/clean_dataset.csv')
+    plot_corr_coe(df)
