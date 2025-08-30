@@ -101,17 +101,19 @@ print(f"\nAfter handle missing values     : {after} attributes (Removed {before 
 
 df.to_csv('./dataset/clean_dataset.csv', index=False)
 
+
+# Select only highly related features
+before = df.shape[1]
+cc.plot_corr_coe(df)
+df = cc.get_highly_correlated_features(df, threshold=0.2)
+after = df.shape[1]
+
+
 # Remove multi-collinearity attiribute
 before = df.shape[1]
 df = cc.filter_multicollinearity(df)
 after = df.shape[1]
-print(f"\nAfter remove redundant features : {after} attributes (Removed {before - after})")
-
-# # Select only highly related features
-# before = df.shape[1]
-# cc.plot_corr_coe(df)
-# df = cc.get_highly_correlated_features(df, threshold=0.55)
-# after = df.shape[1]
+print(f"\nAfter remove Lasso = 0 : {after} attributes (Removed {before - after})")
 
 print(f"\nFinal number of features        : {after}")
 print(df.columns.tolist())

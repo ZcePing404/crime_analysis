@@ -63,8 +63,8 @@ def filter_multicollinearity(df, target_col="ViolentCrimesPerPop"):
         plt.savefig(f"graph/LassoRegression_{idx+1}.png", dpi=300, bbox_inches='tight')
         plt.close()
 
-    # Keep only top 7 features by absolute coefficient value
-    top_features = coef.abs().sort_values(ascending=False).head(9).index.tolist()
+    # Keep only top 9 features by absolute coefficient value
+    top_features = coef[coef != 0].abs().sort_values(ascending=False).head(9).index.tolist()
     filtered_df = df[top_features + [target_col]]
 
     return filtered_df
