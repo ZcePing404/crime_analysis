@@ -23,6 +23,8 @@ if __name__ == "__main__":
     # Load x and y from dataset
     X, Y = train_model.load_dataset()
 
+    X_train_82, Y_train_82, X_test_82, Y_test_82 = train_model.split_data(X, Y, 0.2)
+
     # List of models and their parameter grids
     models = [
         {
@@ -35,11 +37,11 @@ if __name__ == "__main__":
         },
         {
             'name': 'DecisionTree',
-            'model':  DecisionTreeRegressor(max_depth=5, min_samples_leaf=7, min_samples_split=7, max_features='log2'),
+            'model':  DecisionTreeRegressor(max_depth=2, min_samples_leaf=5, min_samples_split=8, max_features='log2'),
             'params': {
-                'max_depth': np.arange(1, 6, 1),            # tree depth from 1 to 20
-                'min_samples_split': np.arange(5, 12, 1),    # node split requirement
-                'min_samples_leaf': np.arange(1, 10, 1),     # leaf size
+                'max_depth': np.arange(1, 10, 1),            # tree depth from 1 to 20
+                'min_samples_split': np.arange(2, 10, 1),    # node split requirement
+                'min_samples_leaf': np.arange(2, 10, 1),     # leaf size
             }
         }
     ]
@@ -53,7 +55,7 @@ if __name__ == "__main__":
 
         for param_name, param_range in params.items():
             # Plot learning curve
-            plot_validation_curve(estimator, X, Y, param_name, param_range, model['name']) 
+            plot_validation_curve(estimator, X_train_82, Y_train_82, param_name, param_range, model['name']) 
 
 
 
