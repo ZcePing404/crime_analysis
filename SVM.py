@@ -10,8 +10,6 @@ if __name__ == "__main__":
     param_grid = {
         'C': [0.1, 0.12, 0.14],
         'epsilon': [0.02, 0.04, 0.06],  
-        'kernel': ['linear', 'rbf'], 
-        'gamma': ['scale', 'auto']  
     }
 
     # Evaluate model
