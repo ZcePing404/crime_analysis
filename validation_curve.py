@@ -31,7 +31,7 @@ if __name__ == "__main__":
             'name': 'SVR',
             'model': SVR(C=0.12, epsilon=0.06),
             'params': {
-                'C': np.arange(0.01, 0.2, 0.01),
+                'C': np.arange(0.01, 1, 0.05),
                 'epsilon': np.arange(0.01, 0.2, 0.005)
             }
         },
