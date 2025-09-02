@@ -8,12 +8,12 @@ import pickle
 import smogn
 
 
-def load_dataset():
+def load_dataset(filename='final_dataset'):
     # Load preprocessed dataset
     try:
-        df = pd.read_csv('./dataset/final_dataset.csv')
+        df = pd.read_csv(f'./dataset/{filename}.csv')
     except FileNotFoundError:
-        raise FileNotFoundError("The dataset file './dataset/final_dataset.csv' was not found. Please check the file path.")
+        raise FileNotFoundError(f"The dataset file './dataset/{filename}.csv' was not found. Please check the file path.")
     # Clean column names
     df.columns = df.columns.str.strip()
 

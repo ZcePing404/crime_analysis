@@ -137,8 +137,8 @@ def rfe_test_n_features(df, target_col="ViolentCrimesPerPop"):
     plt.figure(figsize=(10,6))
     plt.errorbar(feature_counts, mean_rmses, fmt='-o', capsize=3)
     plt.xlabel("Number of Features")
-    plt.ylabel("RMSE (±1 SE)")
-    plt.title("RFE Feature Selection with 1-SE Rule")
+    plt.ylabel("RMSE")
+    plt.title("RFE Feature Selection")
     plt.savefig("graph/RFE_performance.png", dpi=300)
     plt.close()
 
@@ -193,7 +193,7 @@ def elastic_net_test(df, alpha, target_col="ViolentCrimesPerPop"):
 
     plt.axhline(0, color="black", linewidth=1)
     plt.title(f"Features by Elastic Net")
-    plt.ylabel("Selection Frequency")
+    plt.ylabel("Coefficients")
     plt.xlabel("Features")
     plt.xticks(rotation=90, ha="right")
     plt.tight_layout()
@@ -282,21 +282,29 @@ if __name__ == "__main__":
     # df = get_highly_correlated_features(df, threshold=0.2)
     df = mutual_information_test(df)
     after = df.shape[1]
-    print(f"\nAfter correlation coef testing : {after} attributes (Removed {before - after})\n\n")
+    print(f"\nMutual Information Testing")
+    print(f"After remove MI < 0.05 : {after} attributes (Removed {before - after})\n\n")
 
-    # RFE Lasso Regression Test
+    # Elastic Net Test
+    print(f"\nElastic Net Testing")
     before = df.shape[1]
     alpha = elastic_net_test_alpha(df)
     ent_selected_features = elastic_net_test(df, alpha)
-    # rfe_test_n_features(df)
+
+    # RFE Test
+    print(f"\nRFE Testing")
+    rfe_test_n_features(df)
     rfe_selected_features = rfe_test(df, n_features=17)
 
     print(f"\nElastic Net selected features {len(ent_selected_features)} : {ent_selected_features}")
     print(f"RFE selected features {len(rfe_selected_features)} : {rfe_selected_features}")
 
+    df[ent_selected_features + ["ViolentCrimesPerPop"]].to_csv('./dataset/elastic_net_dataset.csv', index=False)
+    df[rfe_selected_features + ["ViolentCrimesPerPop"]].to_csv('./dataset/rfe_dataset.csv', index=False)
+
     df = plot_venn(df, ent_selected_features, rfe_selected_features)
     after = df.shape[1]
-    print(f"\nAfter RFE Elastic Net testing : {after} attributes (Removed {before - after})")
+    print(f"\nAfter Combining two method : {after} attributes")
 
 
     print(f"\nFinal number of features        : {after}")
