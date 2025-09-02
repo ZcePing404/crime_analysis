@@ -69,9 +69,10 @@ def model_evaluation(pipeline, param_grid, X, Y):
         lbl = item["label"]
         clf = item["model"].best_estimator_
 
-        print(f"\n\n10-Fold Cross Validation with {lbl} training data")
-        print("-" * 81)
+        print(f"\n\nBest params from {lbl} training data")
         print("Classifier : ", clf)
+        print("-" * 81)
+        print("10-Fold Cross Validation")
         print("-" * 81)
         display_result(results[lbl])
 

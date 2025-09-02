@@ -8,8 +8,8 @@ if __name__ == "__main__":
 
     # Define the parameter grid for tuning
     param_grid = {
-        'C': [0.1, 0.12, 0.14],
-        'epsilon': [0.02, 0.04, 0.06],  
+        'C': [0.1, 0.11, 0.12, 0.13, 0.14, 0.15],
+        'epsilon': [0.01, 0.02, 0.03, 0.04, 0.05, 0.06],  
     }
 
     # Evaluate model
