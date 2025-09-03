@@ -214,20 +214,20 @@ def elastic_net_test_alpha(df, target_col="ViolentCrimesPerPop"):
 
     # ----- 1-SE RULE -----
     # Average MSE across bootstraps
-    mse_mean = enet.mse_path_.mean(axis=1)
-    mse_std = enet.mse_path_.std(axis=1)
+    mse_mean = np.round(enet.mse_path_.mean(axis=1), 4)
+    mse_std = np.round(enet.mse_path_.std(axis=1), 4)
 
     # Best alpha
     best_idx = np.argmin(mse_mean)
-    best_alpha = enet.alphas_[best_idx]
-    best_error = mse_mean[best_idx]
+    best_alpha = round(enet.alphas_[best_idx], 4)
+    best_error = round(mse_mean[best_idx], 4)
 
     # 1-SE alpha: largest alpha with error <= best_error + std
-    one_se_error = best_error + mse_std[best_idx]
+    one_se_error = round(best_error + mse_std[best_idx], 4)
 
     # Find closest alpha satisfying 1-SE rule
     candidate_alphas = enet.alphas_[mse_mean <= one_se_error]
-    one_se_alpha = candidate_alphas.max() if len(candidate_alphas) > 0 else best_alpha
+    one_se_alpha = np.round(candidate_alphas.max(), 4) if len(candidate_alphas) > 0 else best_alpha
 
     print(f"Best alpha (λ): {best_alpha}")
     print(f"1-SE alpha (λ): {one_se_alpha}")
@@ -293,7 +293,7 @@ if __name__ == "__main__":
 
     # RFE Test
     print(f"\nRFE Testing")
-    rfe_test_n_features(df)
+    # rfe_test_n_features(df)
     rfe_selected_features = rfe_test(df, n_features=17)
 
     print(f"\nElastic Net selected features {len(ent_selected_features)} : {ent_selected_features}")
