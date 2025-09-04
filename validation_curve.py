@@ -1,3 +1,4 @@
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils import shuffle
 import matplotlib.pyplot as plt
 from sklearn.svm import SVR
@@ -27,14 +28,14 @@ if __name__ == "__main__":
 
     # List of models and their parameter grids
     models = [
-        {
-            'name': 'SVR',
-            'model': SVR(C=0.12, epsilon=0.06),
-            'params': {
-                'C': np.arange(0.01, 1, 0.05),
-                'epsilon': np.arange(0.01, 0.2, 0.005)
-            }
-        },
+        # {
+        #     'name': 'SVR',
+        #     'model': SVR(C=0.12, epsilon=0.06),
+        #     'params': {
+        #         'C': np.arange(0.01, 1, 0.05),
+        #         'epsilon': np.arange(0.01, 0.2, 0.005)
+        #     }
+        # },
         {
             'name': 'DecisionTree',
             'model':  DecisionTreeRegressor(max_depth=2, min_samples_leaf=5, min_samples_split=8, max_features='log2'),
@@ -43,7 +44,15 @@ if __name__ == "__main__":
                 'min_samples_split': np.arange(2, 10, 1),    # node split requirement
                 'min_samples_leaf': np.arange(2, 10, 1),     # leaf size
             }
-        }
+        },
+        {
+            'name': 'KNearestNeigbours',
+            'model':  KNeighborsRegressor(),
+            'params': {
+                'C': np.arange(0.01, 1, 0.05),
+                'epsilon': np.arange(0.01, 0.2, 0.005)
+            }
+        },
     ]
 
     for model in models:

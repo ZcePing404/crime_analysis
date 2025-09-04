@@ -8,12 +8,12 @@ if __name__ == "__main__":
 
     X, Y = train_model.load_dataset()
 
-    param_grind = {
-        "n_neighbors": [],
-        "weights" : ['uniform', 'distance'],
+    param_grid = {
+        "n_neighbors": [27, 28, 29, 30, 31],
+        "weights": ["uniform"]
     }
 
-    selected_model = train_model.model_evaluation(KNeighborsRegressor(), param_grind, X, Y)
+    selected_model = train_model.model_evaluation(KNeighborsRegressor(), param_grid, X, Y)
 
     learning_curve.plot_learning_curve(selected_model.best_estimator_, X, Y, "KNR_test")
 
