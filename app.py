@@ -3,12 +3,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
+import plotly.figure_factory as ff
+from scipy.stats import gaussian_kde
+import plotly.graph_objects as go
+import numpy as np
 import pickle
     # Load the model
 model = pickle.load(open("model/DecisionTree_regression.pkl", "rb"))
 
 df = pd.read_csv("dataset/communities_and_crime.csv")
-df_state = pd.read_csv("dataset/state_grouped_crime.csv")
+df_state = pd.read_csv("dataset/state_summary.csv")
 st.title("Communities and Crime Dashboard")
 st.subheader("📌 Overview KPIs")
 
@@ -34,108 +38,176 @@ col4.metric("Highest Crime State", highest_state)
 col5.metric("Lowest Crime State", lowest_state)
 
 
-st.subheader("US State Population Distribution")
+df_state["Unnormalized population %"] = (
+    df_state["population"] / df_state["population"].sum() * 100
+).round(2)
 
-fig = px.choropleth(
+st.subheader("US State Population Distribution")
+fig_population = px.choropleth(
     df_state,
-    locations="statename",  # Must be state abbreviations like 'CA'
+    locations="statename",           
+    locationmode="USA-states",       
+    color="population",        
+    hover_name="full state name",
+    hover_data={
+        "statename": False,        
+        "population": ":,.0f",
+        "Unnormalized population %": ":.2f",
+    },
+    scope="usa",                     
+    color_continuous_scale="Blues",   
+    title="State Population Choropleth"
+)
+
+fig_crime = px.choropleth(
+    df_state,
+    locations="statename", 
     locationmode="USA-states",
-    color="ViolentCrimesPerPop",  # Color by violent crimes
+    color="ViolentCrimesPerPop", 
     hover_name="full state name",
     hover_data={
         "ViolentCrimesPerPop": True,
         "statename": False
     },
     scope="usa",
-    color_continuous_scale="Reds"  # Red tones
+    color_continuous_scale="Reds",
+    title="Crime Distribution Choropleth"
 )
 
-st.plotly_chart(fig, use_container_width=True)
-
-# Demographics distributions
-demo_cols = ["racepctblack", "racePctWhite", "PctPopUnderPov", "PctUnemployed"]
+st.plotly_chart(fig_population, use_container_width=True)
+st.plotly_chart(fig_crime, use_container_width=True)
 
 st.subheader("👥 Demographic Distributions")
-# for col in demo_cols:
-#     fig = px.histogram(df, x=col, nbins=50, title=f"Distribution of {col}")
-#     st.plotly_chart(fig, use_container_width=True)
+st.subheader("Bar Chart of Normalized White Percentages by State")
 
-# # Correlation of demographics with crime rate
-# st.write("### Correlation with Violent Crime Rate")
-# for col in demo_cols:
-#     fig = px.scatter(df, x=col, y="ViolentCrimesPerPop",
-#                      trendline="ols",
-#                      title=f"{col} vs Violent Crime Rate")
-#     st.plotly_chart(fig, use_container_width=True)
+fig1 = px.bar(
+    df_state.sort_values("racePctWhite", ascending=False),
+    hover_name="full state name",
+    x="statename",
+    y="racePctWhite",
+    color="racePctWhite",
+    color_continuous_scale="Blues",
+    title="Percentage of Caucasian by State (racePctWhite)"
+)
+fig1.update_layout(xaxis_title="State", yaxis_title="Normalized White %")
 
-st.write("### Racial Composition (Average Across Communities)")
+st.plotly_chart(fig1, use_container_width=True)
 
-# Calculate average racial composition
-avg_white = df["racePctWhite"].mean()
-avg_black = df["racepctblack"].mean()
 
-# Put in a DataFrame for plotting
-race_df = pd.DataFrame({
-    "Race": ["White", "Black"],
-    "Percentage": [avg_white, avg_black]
-})
-# Convert to percent with 2 decimal places
-race_df["Percentage"] = race_df["Percentage"] * 100
-race_df["Percentage"] = race_df["Percentage"].round(2)
+st.subheader("Bar Chart of Normalized Black Percentages by State")
+fig2 = px.bar(
+    df_state.sort_values("racepctblack", ascending=False),
+    hover_name="full state name",
+    x="statename",
+    y="racepctblack",
+    color="racepctblack",
+    color_continuous_scale="Blues",
+    title="Percentage of African American by State (racepctblack)"
+)
+fig2.update_layout(xaxis_title="State", yaxis_title="Normalized Black %")
 
-# Pie chart (deep blue shades)
-fig = px.pie(
-    race_df, 
-    names="Race", 
-    values="Percentage",
-    title="Average Racial Composition (White vs Black)",
-    color="Race",
-    color_discrete_map={
-        "White": "#87ceeb",  # dark red
-        "Black": "#0d47a1"   # lighter red
-    }
+st.plotly_chart(fig2, use_container_width=True)
+
+st.subheader("Density of racePctWhite vs racepctblack")
+x_white = df["racePctWhite"]
+x_black = df["racepctblack"]
+
+kde_white = gaussian_kde(x_white)
+kde_black = gaussian_kde(x_black)
+
+x_range = np.linspace(0, max(x_white.max(), x_black.max()), 200)
+
+# Create traces
+trace_white = go.Scatter(
+    x=x_range,
+    y=kde_white(x_range),
+    fill='tozeroy',             # fill area under the curve
+    fillcolor='rgba(13,71,161,0.5)',  # blue with 50% transparency
+    line=dict(color='rgba(13,71,161,1)'),
+    name='racePctWhite'
 )
 
-# Show percent labels inside
-fig.update_traces(
-    textinfo="label+percent",
-    texttemplate="%{label}: %{value:.2f}%"  # show values with 2 decimal points
+trace_black = go.Scatter(
+    x=x_range,
+    y=kde_black(x_range),
+    fill='tozeroy', 
+    fillcolor='rgba(135,206,235,0.5)',  # light blue / purple-like color
+    line=dict(color='rgba(135,206,235,1)'),
+    name='racepctblack'
+)
+
+# Combine traces
+fig = go.Figure([trace_white, trace_black])
+fig.update_layout(
+    title="Density of racePctWhite vs racepctblack",
+    xaxis_title="Percentage (normalized)",
+    yaxis_title="Density",
+    template="simple_white"
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
-df_state["WhitePop"] = df_state["Unnormalized population"] * df_state["racePctWhite"]
-df_state["BlackPop"] = df_state["Unnormalized population"] * df_state["racepctblack"]
+st.subheader("📊 Socioeconomic Indicators")
 
-# Select only needed columns
-plot_df = df_state[["statename", "WhitePop", "BlackPop"]].set_index("statename")
+socio_cols = ["PctIlleg", "PctUnemployed", "PctPopUnderPov", "PctKids2Par"]
+socio_description = ["Percentage of Kids Born to Never Married",
+                     "Percentage of People Unemployed", 
+                     "Percentage of People Under the Poverty Level", 
+                     "Percentage of Kids in with Two Parents"]
 
-st.write("### Stacked Histogram of White vs Black Population by State")
+for col, desc in zip(socio_cols, socio_description):
+    fig = px.histogram(
+        df,
+        x=col,
+        nbins=30,
+        title=f"Distribution of {desc} ({col})",
+        color_discrete_sequence=["#1f77b4"],
+        opacity=0.7
+    )
+    fig.update_traces(marker=dict(line=dict(width=1, color="black")))  # bar borders
+    fig.update_layout(
+        bargap=0.05,
+        xaxis_title=col,
+        yaxis_title="Count",
+        template="plotly_white"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
-# Plot stacked bar chart
-fig, ax = plt.subplots(figsize=(12, 6))
-plot_df.plot(kind="bar", stacked=True, ax=ax, color=["#0d47a1", "#87ceeb"])
 
-ax.set_ylabel("Population")
-ax.set_xlabel("State")
-ax.set_title("White vs Black Population by State")
-ax.legend(["White Population", "Black Population"])
+st.subheader("🏠 Housing Conditions")
 
-st.pyplot(fig)
+housing_cols = ["HousVacant", "PctPersDenseHous"]
+housing_description = ["Number of Vacant Households", 
+                     "Percent of Persons in Dense Housing"]
 
+for col, desc in zip(housing_cols, housing_description):
+    fig = px.histogram(
+        df,
+        x=col,
+        nbins=30,
+        title=f"Distribution of {desc} ({col})",
+        color_discrete_sequence=["#1f77b4"],
+        opacity=0.7
+    )
+    fig.update_traces(marker=dict(line=dict(width=1, color="black")))
+    fig.update_layout(
+        bargap=0.05,
+        xaxis_title=col,
+        yaxis_title="Count",
+        template="plotly_white"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 st.subheader("📈 Model Insights")
-
-# ===== Feature Importance =====
 st.write("### Feature Importance")
 if hasattr(model, 'feature_importances_'):
     try:
         feature_names = [
-            "PctKids2Par", "PctPersDenseHous", "PctIlleg", "NumStreet",
-            "racepctblack", "HousVacant", "MalePctDivorce", "RentLowQ",
-            "pctWInvInc"
+            "PctPersDenseHous", "PctKids2Par", "HousVacant", "racepctblack", 
+            "PctIlleg"
         ]
         importances = model.feature_importances_
+        print(importances)
         fi = pd.DataFrame({"Feature": feature_names, "Importance": importances})
         fi = fi.sort_values("Importance", ascending=False)
 
@@ -147,7 +219,7 @@ if hasattr(model, 'feature_importances_'):
 else:
     st.warning("⚠️ This model does not provide feature importance.")
 
-# ===== Interactive Sliders =====
+
 st.write("### 🔍 Explore What-if Scenarios")
 st.markdown("Adjust the sliders to simulate different conditions:")
 
@@ -155,46 +227,33 @@ st.markdown("Adjust the sliders to simulate different conditions:")
 PctKids2Par = st.slider("Percentage of kids in family housing with two parents (PctKids2Par)", 0.0, 1.0, 0.7)
 PctPersDenseHous = st.slider("Percentage of persons in dense housing (PctPersDenseHous)", 0.0, 1.0, 0.1)
 PctIlleg = st.slider("Percentage of kids born to never married (PctIlleg)", 0.0, 1.0, 0.1)
-NumStreet = st.slider("Number of people living in areas classified as urban (NumStreet)", 0.0, 1.0, 0.1)
 racepctblack = st.slider("Percentage of population that is African American (racepctblack)", 0.0, 1.0, 0.1)
 HousVacant = st.slider("Number of vacant households (HousVacant)", 0.0, 1.0, 0.05)
-MalePctDivorce = st.slider("Percentage of males who are divorced (MalePctDivorce)", 0.0, 1.0, 0.1)
-RentLowQ = st.slider("Lower quartile of rent (RentLowQ)", 0.0, 1.0, 0.2)
-pctWInvInc = st.slider("Percentage of households with investment / rent income in 1989 (pctWInvInc)", 0.0, 1.0, 0.05)
 
 # Put into DataFrame for prediction
 X_new = pd.DataFrame([[
-    PctKids2Par,
     PctPersDenseHous,
-    PctIlleg,
-    NumStreet,
-    racepctblack,
+    PctKids2Par,
     HousVacant,
-    MalePctDivorce,
-    RentLowQ,
-    pctWInvInc
+    racepctblack,
+    PctIlleg,
 ]], columns=[
-    "PctKids2Par",
     "PctPersDenseHous",
-    "PctIlleg",
-    "NumStreet",
-    "racepctblack",
+    "PctKids2Par",
     "HousVacant",
-    "MalePctDivorce",
-    "RentLowQ",
-    "pctWInvInc"
+    "racepctblack",
+    "PctIlleg",
 ])
 
-# Predict button
 if st.button("Predict"):
     pred = model.predict(X_new)[0]
-    st.success(f"🔮 Predicted Violent Crime Rate: **{pred:.3f}**")
+    st.success(f"🔮 Predicted Violent Crime Rate: **{pred * 100:.2f}%**")
 
-# ===== Summary & Recommendations =====
 st.write("### 📝 Summary & Recommendations")
 st.markdown("""
-- **Higher % of kids with two parents → lower violent crime.**  
-- **More vacant households → higher violent crime risk.**  
-- **Higher % of investment income households → lower violent crime.**  
-- **Higher % of persons in dense housing → potential increase in crime risk.**
+- **Higher % of kids in two-parent households (PctKids2Par) → lower violent crime risk.**  
+- **Higher % of persons in dense housing (PctPersDenseHous) → potential increase in violent crime.**  
+- **Higher % of kids born to unmarried parents (PctIlleg) → associated with higher violent crime risk.**  
+- **Higher % of African American population (racepctblack) → may correlate with crime in the dataset, but be cautious as this may reflect systemic bias rather than true causation.**  
+- **More vacant households (HousVacant) → higher violent crime risk.**  
 """)

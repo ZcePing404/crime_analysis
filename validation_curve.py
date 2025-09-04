@@ -36,22 +36,23 @@ if __name__ == "__main__":
         #         'epsilon': np.arange(0.01, 0.2, 0.005)
         #     }
         # },
-        # {
-        #     'name': 'DecisionTree',
-        #     'model':  DecisionTreeRegressor(max_depth=2, min_samples_leaf=5, min_samples_split=8, max_features='log2'),
-        #     'params': {
-        #         'max_depth': np.arange(1, 10, 1),            # tree depth from 1 to 20
-        #         'min_samples_split': np.arange(2, 10, 1),    # node split requirement
-        #         'min_samples_leaf': np.arange(2, 10, 1),     # leaf size
-        #     }
-        # },
+        {
+            'name': 'DecisionTree',
+            'model':  DecisionTreeRegressor(max_depth=2, min_samples_leaf=5, min_samples_split=8, max_features='log2'),
+            'params': {
+                'max_depth': np.arange(1, 10, 1),            # tree depth from 1 to 20
+                'min_samples_split': np.arange(2, 10, 1),    # node split requirement
+                'min_samples_leaf': np.arange(2, 10, 1),     # leaf size
+            }
+        },
         {
             'name': 'KNearestNeigbours',
             'model':  KNeighborsRegressor(),
             'params': {
-                'n_neighbors': np.arange(1, 50, 1),
+                'C': np.arange(0.01, 1, 0.05),
+                'epsilon': np.arange(0.01, 0.2, 0.005)
             }
-        }
+        },
     ]
 
     for model in models:
