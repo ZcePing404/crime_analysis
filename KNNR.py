@@ -10,7 +10,10 @@ if __name__ == "__main__":
 
     param_grid = {
         "n_neighbors": [27, 28, 29, 30, 31],
-        "weights": ["uniform"]
+        "weights": ["uniform"],
+        "algorithm": ["auto"],
+        "leaf_size": [10,20,30,40,50],
+        "metric" : ["minkowski"],
     }
 
     selected_model = train_model.model_evaluation(KNeighborsRegressor(), param_grid, X, Y)

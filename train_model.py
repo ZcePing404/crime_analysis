@@ -33,7 +33,7 @@ def hyperparameter_tuning(X, Y, model, param_grid, target='neg_mean_squared_erro
 
     if MLP == False:
         grid = GridSearchCV(model, param_grid, scoring=target, cv=5, verbose=3)
-        
+        grid.fit(X, Y)
     else:
         grid = HalvingRandomSearchCV(estimator=model,
                                     param_distributions=param_grid,
@@ -45,7 +45,7 @@ def hyperparameter_tuning(X, Y, model, param_grid, target='neg_mean_squared_erro
                                     cv=cv,                       
                                     scoring=target,
                                     verbose=1,
-                                    n_candidates='exhaust')   
+                                    n_candidates='exhaust')
         grid.fit(X, Y)
 
     return grid
