@@ -1,11 +1,12 @@
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sklearn.model_selection import GridSearchCV, KFold, train_test_split
+from sklearn.experimental import enable_halving_search_cv
+from sklearn.model_selection import GridSearchCV, HalvingRandomSearchCV, KFold, train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, root_mean_squared_error, r2_score
 import os
 import pickle
-import smogn
+#import smogn
 
 
 def load_dataset(filename='final_dataset'):
@@ -28,21 +29,37 @@ def load_dataset(filename='final_dataset'):
 
 
 
-def hyperparameter_tuning(X, Y, model, param_grid, target='neg_mean_squared_error'):
-    grid = GridSearchCV(model, param_grid, scoring=target, cv=5, verbose=3)
-    grid.fit(X, Y)
+def hyperparameter_tuning(X, Y, model, param_grid, target='neg_mean_squared_error', MLP=False, factor=3, cv=3, resource="epochs", max_resource=100, min_resource=10):
+
+    if MLP == False:
+        grid = GridSearchCV(model, param_grid, scoring=target, cv=5, verbose=3)
+        
+    else:
+        grid = HalvingRandomSearchCV(estimator=model,
+                                    param_distributions=param_grid,
+                                    factor=factor,                   
+                                    resource=resource,         
+                                    max_resources=max_resource,          
+                                    min_resources=min_resource,           
+                                    random_state=42,
+                                    cv=cv,                       
+                                    scoring=target,
+                                    verbose=1,
+                                    n_candidates='exhaust')   
+        grid.fit(X, Y)
+
     return grid
 
 
 
-def model_evaluation(pipeline, param_grid, X, Y):
+def model_evaluation(pipeline, param_grid, X, Y, MLP=False):
     # Split data for 80/20
     X_train_82, Y_train_82, X_test_82, Y_test_82 = split_data(X, Y, 0.2)
-    model_82 = hyperparameter_tuning(X_train_82, Y_train_82, pipeline, param_grid)
+    model_82 = hyperparameter_tuning(X_train_82, Y_train_82, pipeline, param_grid, MLP=MLP)
 
     # Split data for 70/30
     X_train_73, Y_train_73, X_test_73, Y_test_73 = split_data(X, Y, 0.3)
-    model_73 = hyperparameter_tuning(X_train_73, Y_train_73, pipeline, param_grid)
+    model_73 = hyperparameter_tuning(X_train_73, Y_train_73, pipeline, param_grid, MLP=MLP)
 
     #Prepare models and potential splits
     splits = [
