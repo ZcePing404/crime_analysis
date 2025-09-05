@@ -8,8 +8,8 @@ from sklearn.feature_selection import RFE, mutual_info_regression
 from sklearn.linear_model import ElasticNet, ElasticNetCV
 from sklearn.model_selection import cross_val_score
 from sklearn.svm import SVR
-from sklearn.utils import resample
 from matplotlib_venn import venn2
+from sklearn.tree import DecisionTreeRegressor
 
 
 def get_highly_correlated_features(df, threshold, target_col='ViolentCrimesPerPop',):
@@ -107,31 +107,38 @@ def mutual_information_test(df, target_col="ViolentCrimesPerPop", threshold=0.05
 
 
 
-def rfe_test_n_features(df, target_col="ViolentCrimesPerPop"):
+def rfe_test_n_features(df, regressor, target_col="ViolentCrimesPerPop"):
     # Split features and target
     X = df.drop(columns=[target_col])
     Y = df[target_col]
     feature_names = X.columns
 
     # RFE with Elastic Net
-    print(f"\nRFE with Elastic Net Testing N features")
-    model = SVR(kernel="linear").fit(X, Y)
+    print(f"\nRFE with {regressor} Testing N features")
+    estimator = regressor.fit(X, Y)
     scores = []
 
     # try RFE for different numbers of features
     for n_features in range(5, min(30, len(feature_names))):  # try from at least 5 features
-        print(f"Testing n_features : {n_features}")
-        rfe = RFE(model, n_features_to_select=n_features)
+        rfe = RFE(estimator, n_features_to_select=n_features)
         X_rfe = rfe.fit_transform(X, Y)
         
         # cross_val_score returns negative MSE, so take mean RMSE
         rmse = np.sqrt(-cross_val_score(rfe, X_rfe, Y, cv=10, scoring="neg_mean_squared_error"))
         mean_rmse = round(rmse.mean(), 4)
+        print(f"Testing n_features : {n_features} --- RMSE : {mean_rmse}")
         scores.append((n_features, mean_rmse))
 
     
     results = np.array(scores)
     feature_counts, mean_rmses = results[:,0], results[:,1]
+
+    if hasattr(rfe.estimator_, "coef_"):  # for SVR, LinearRegression, etc.
+        estimator_name = 'SVR'
+    elif hasattr(rfe.estimator_, "feature_importances_"):  # for trees
+        estimator_name = 'DT'
+    else:
+        raise AttributeError("This estimator does not provide coef_ or feature_importances_")
 
     # Plot RMSE vs number of features
     plt.figure(figsize=(10,6))
@@ -139,34 +146,42 @@ def rfe_test_n_features(df, target_col="ViolentCrimesPerPop"):
     plt.xlabel("Number of Features")
     plt.ylabel("RMSE")
     plt.title("RFE Feature Selection")
-    plt.savefig("graph/RFE_performance.png", dpi=300)
+    plt.savefig(f"graph/RFE_performance_{estimator_name}.png", dpi=300)
     plt.close()
 
 
 
-def rfe_test(df, n_features, target_col="ViolentCrimesPerPop"):
+def rfe_test(df, regressor, n_features, target_col="ViolentCrimesPerPop"):
     # Split features and target
     X = df.drop(columns=[target_col])
     Y = df[target_col]
 
     # Use Elastic Net as base estimator
-    model = SVR(kernel="linear").fit(X, Y)
-    rfe = RFE(model, n_features_to_select=n_features)
+    estimator = regressor.fit(X, Y)
+    rfe = RFE(estimator, n_features_to_select=n_features)
     rfe.fit(X, Y)
 
     # Get selected feature names
     selected_features = X.columns[rfe.support_]
-    coefs = pd.Series(rfe.estimator_.coef_.ravel(), index=selected_features)
+    # Handle coefficients vs feature importance
+    if hasattr(rfe.estimator_, "coef_"):  # for SVR, LinearRegression, etc.
+        scores = pd.Series(rfe.estimator_.coef_.ravel(), index=selected_features)
+        estimator_name = 'SVR'
+    elif hasattr(rfe.estimator_, "feature_importances_"):  # for trees
+        scores = pd.Series(rfe.estimator_.feature_importances_, index=selected_features)
+        estimator_name = 'DT'
+    else:
+        raise AttributeError("This estimator does not provide coef_ or feature_importances_")
 
     # Pick top N by absolute coefficient
-    top_features = coefs.abs().sort_values(ascending=False).head(n_features)
+    top_features = scores.abs().sort_values(ascending=False).head(n_features)
 
     plt.figure(figsize=(10,6))
     top_features.plot(kind="barh", color="skyblue")
     plt.xlabel("Variable Importance")
     plt.title(f"Features Selected by RFE")
     plt.gca().invert_yaxis()
-    plt.savefig("graph/RFE_top_features.png", dpi=300)
+    plt.savefig(f"graph/RFE_top_features_{estimator_name}.png", dpi=300)
     plt.close()
 
     return top_features.index.to_list()
@@ -252,7 +267,7 @@ def elastic_net_test_alpha(df, target_col="ViolentCrimesPerPop"):
 
 
 
-def plot_venn(df, elastic_features, rfe_features, target_col="ViolentCrimesPerPop"):
+def plot_venn(df, elastic_features, rfe_features, regressor_name, target_col="ViolentCrimesPerPop"):
     # ---------------------------
     # 4. Venn Diagram (Intersection)
     # ---------------------------
@@ -262,8 +277,8 @@ def plot_venn(df, elastic_features, rfe_features, target_col="ViolentCrimesPerPo
 
     plt.figure(figsize=(6,6))
     venn2([enet_set, rfe_set], set_labels=("Elastic Net", "RFE"))
-    plt.title("Feature Overlap between Elastic Net and RFE")
-    plt.savefig("graph/feature_venn.png", dpi=300)
+    plt.title(f"Feature Overlap between Elastic Net and RFE with {regressor_name}")
+    plt.savefig(f"graph/feature_venn_{regressor_name}.png", dpi=300)
     plt.close()
 
     print(f"Intersection features ({len(intersection)}):", intersection)    
@@ -292,21 +307,20 @@ if __name__ == "__main__":
     ent_selected_features = elastic_net_test(df, alpha)
 
     # RFE Test
-    print(f"\nRFE Testing")
-    # rfe_test_n_features(df)
-    rfe_selected_features = rfe_test(df, n_features=17)
+    print(f"\nRFE with SVR Testing")
+    # rfe_test_n_features(df, SVR(kernel="linear"))
+    rfe_SVR_selected_features = rfe_test(df, SVR(kernel="linear"), n_features=17)
+
+    print(f"\nRFE with DT Testing")
+    # rfe_test_n_features(df, DecisionTreeRegressor(random_state=42))
+    rfe_DT_selected_features = rfe_test(df, DecisionTreeRegressor(random_state=42), n_features=11)
 
     print(f"\nElastic Net selected features {len(ent_selected_features)} : {ent_selected_features}")
-    print(f"RFE selected features {len(rfe_selected_features)} : {rfe_selected_features}")
+    print(f"RFE with SVR selected features {len(rfe_SVR_selected_features)} : {rfe_SVR_selected_features}")
+    print(f"RFE with DT selected features {len(rfe_DT_selected_features)} : {rfe_DT_selected_features}")
 
-    df[ent_selected_features + ["ViolentCrimesPerPop"]].to_csv('./dataset/elastic_net_dataset.csv', index=False)
-    df[rfe_selected_features + ["ViolentCrimesPerPop"]].to_csv('./dataset/rfe_dataset.csv', index=False)
-
-    df = plot_venn(df, ent_selected_features, rfe_selected_features)
-    after = df.shape[1]
-    print(f"\nAfter Combining two method : {after} attributes")
-
-
-    print(f"\nFinal number of features        : {after}")
-    print(df.columns.tolist())
-    df.to_csv('./dataset/final_dataset.csv', index=False)
+    rfe_SVM_df = plot_venn(df, ent_selected_features, rfe_SVR_selected_features, 'SVR')
+    rfe_DT_df = plot_venn(df, ent_selected_features, rfe_DT_selected_features, 'Decision Tree')
+    rfe_SVM_df.to_csv('./dataset/rfe_SVR_dataset.csv', index=False)
+    rfe_DT_df.to_csv('./dataset/rfe_DT_dataset.csv', index=False)
+    rfe_SVM_df.to_csv('./dataset/final_dataset.csv', index=False)

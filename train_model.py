@@ -2,14 +2,15 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.experimental import enable_halving_search_cv
-from sklearn.model_selection import GridSearchCV, HalvingRandomSearchCV, KFold, train_test_split
+from sklearn.model_selection._search_successive_halving import HalvingRandomSearchCV
+from sklearn.model_selection import GridSearchCV, KFold, train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, root_mean_squared_error, r2_score
 import os
 import pickle
 #import smogn
 
 
-def load_dataset(filename='final_dataset'):
+def load_dataset(filename='rfe_DT_dataset'):
     # Load preprocessed dataset
     try:
         df = pd.read_csv(f'./dataset/{filename}.csv')
@@ -29,7 +30,7 @@ def load_dataset(filename='final_dataset'):
 
 
 
-def hyperparameter_tuning(X, Y, model, param_grid, target='neg_mean_squared_error', MLP=False, factor=3, cv=3, resource="epochs", max_resource=100, min_resource=10):
+def hyperparameter_tuning(X, Y, model, param_grid, target='neg_mean_squared_error', MLP=False):
 
     if MLP == False:
         grid = GridSearchCV(model, param_grid, scoring=target, cv=5, verbose=3)
@@ -37,12 +38,12 @@ def hyperparameter_tuning(X, Y, model, param_grid, target='neg_mean_squared_erro
     else:
         grid = HalvingRandomSearchCV(estimator=model,
                                     param_distributions=param_grid,
-                                    factor=factor,                   
-                                    resource=resource,         
-                                    max_resources=max_resource,          
-                                    min_resources=min_resource,           
+                                    factor=3,                   
+                                    resource="epochs",         
+                                    max_resources=100,          
+                                    min_resources=10,           
                                     random_state=42,
-                                    cv=cv,                       
+                                    cv=3,                       
                                     scoring=target,
                                     verbose=1,
                                     n_candidates='exhaust')
@@ -82,11 +83,12 @@ def model_evaluation(pipeline, param_grid, X, Y, MLP=False):
     selected_model = model_82 if best_label == "80/20" else model_73
 
     # Display results for each split
+    num_features = X.shape[1]
     for item in splits:
         lbl = item["label"]
         clf = item["model"].best_estimator_
 
-        print(f"\n\nBest params from {lbl} training data")
+        print(f"\n\nBest params from {lbl} training data with {num_features} features")
         print("Classifier : ", clf)
         print("-" * 81)
         print("10-Fold Cross Validation")

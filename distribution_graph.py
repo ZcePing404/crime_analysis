@@ -4,7 +4,7 @@ import seaborn as sns
 
 # Load dataset
 clean_df = pd.read_csv('./dataset/clean_dataset.csv')
-cols = ['PctPersDenseHous', 'NumStreet', 'PctKids2Par', 'PctIlleg', 'HousVacant', 'racepctblack', 'RentLowQ', 'MalePctDivorce', 'ViolentCrimesPerPop']
+cols = ['PctPersDenseHous', 'PctKids2Par', 'PctIlleg', 'HousVacant', 'racepctblack', 'ViolentCrimesPerPop']
 
 for col in cols:
     # Plot
