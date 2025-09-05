@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     # Define the parameter grid for tuning
     param_grid = {
-        'criterion': ['squared_error', 'friedman_mse', 'absolute_error'],  
+        # 'criterion': ['squared_error', 'friedman_mse', 'absolute_error'],  
         'max_depth': [2], # [None, 5, 10, 20]
         'min_samples_split': [4], #[8, 9, 10]
         'min_samples_leaf': [3], # [2, 3, 4]

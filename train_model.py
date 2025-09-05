@@ -10,7 +10,7 @@ import pickle
 #import smogn
 
 
-def load_dataset(filename='rfe_DT_dataset'):
+def load_dataset(filename='final_dataset'):
     # Load preprocessed dataset
     try:
         df = pd.read_csv(f'./dataset/{filename}.csv')
