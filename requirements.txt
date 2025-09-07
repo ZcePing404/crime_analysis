@@ -7,4 +7,4 @@ plotly
 numpy
 scipy
 statsmodels
-# pip freeze > requirement.txt: freeze each of the library version
+# run pip freeze > requirements.txt: freeze each of the library version into requirement.txt
