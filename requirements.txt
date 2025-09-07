@@ -6,4 +6,5 @@ seaborn
 plotly
 numpy
 scipy
+statsmodels
 # pip freeze > requirement.txt: freeze each of the library version
