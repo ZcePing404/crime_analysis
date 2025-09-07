@@ -3,14 +3,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
-import plotly.figure_factory as ff
-from scipy.stats import gaussian_kde
 import plotly.graph_objects as go
 import numpy as np
 import pickle
-    # Load the model
-model = pickle.load(open("model/DecisionTree_regression.pkl", "rb"))
-
+from sklearn.inspection import permutation_importance
+from scipy.stats import gaussian_kde
+from sklearn.model_selection import train_test_split
 df = pd.read_csv("dataset/communities_and_crime.csv")
 df_state = pd.read_csv("dataset/state_summary.csv")
 st.title("Communities and Crime Dashboard")
@@ -38,9 +36,9 @@ col4.metric("Highest Crime State", highest_state)
 col5.metric("Lowest Crime State", lowest_state)
 
 
-df_state["Unnormalized population %"] = (
+df_state["Percentage of population"] = (
     df_state["population"] / df_state["population"].sum() * 100
-).round(2)
+).round(2).astype(str) + "%"
 
 st.subheader("US State Population Distribution")
 fig_population = px.choropleth(
@@ -52,7 +50,7 @@ fig_population = px.choropleth(
     hover_data={
         "statename": False,        
         "population": ":,.0f",
-        "Unnormalized population %": ":.2f",
+        "Percentage of population": True,
     },
     scope="usa",                     
     color_continuous_scale="Blues",   
@@ -156,68 +154,128 @@ socio_description = ["Percentage of Kids Born to Never Married",
                      "Percentage of Kids in with Two Parents"]
 
 for col, desc in zip(socio_cols, socio_description):
-    fig = px.histogram(
-        df,
-        x=col,
-        nbins=30,
-        title=f"Distribution of {desc} ({col})",
-        color_discrete_sequence=["#1f77b4"],
-        opacity=0.7
-    )
-    fig.update_traces(marker=dict(line=dict(width=1, color="black")))  # bar borders
-    fig.update_layout(
-        bargap=0.05,
-        xaxis_title=col,
-        yaxis_title="Count",
-        template="plotly_white"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    # Streamlit layout with 2 columns side by side
+    col1, col2 = st.columns(2)
 
+    # --- Histogram ---
+    with col1:
+        fig_hist = px.histogram(
+            df,
+            x=col,
+            nbins=30,
+            title=f"Distribution of {col}",
+            color_discrete_sequence=["#1f77b4"],
+            opacity=0.7
+        )
+        fig_hist.update_traces(marker=dict(line=dict(width=1, color="black")))
+        fig_hist.update_layout(
+            bargap=0.05,
+            xaxis_title=desc,
+            yaxis_title="Count",
+            template="plotly_white"
+        )
+        st.plotly_chart(fig_hist, use_container_width=True)
+
+    # --- Scatter with regression line ---
+    with col2:
+        fig_scatter = px.scatter(
+            df,
+            x=col,
+            y="ViolentCrimesPerPop",
+            opacity=0.5,
+            trendline="ols",  # regression line
+            trendline_color_override="skyblue"
+        )
+        fig_scatter.update_traces(marker=dict(size=5))
+        fig_scatter.update_layout(
+            title=f"{col} vs ViolentCrimesPerPop",
+            xaxis_title=desc,
+            yaxis_title="ViolentCrimesPerPop",
+            template="plotly_white"
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True)
 
 st.subheader("🏠 Housing Conditions")
 
 housing_cols = ["HousVacant", "PctPersDenseHous"]
-housing_description = ["Number of Vacant Households", 
-                     "Percent of Persons in Dense Housing"]
+housing_description = [
+    "Number of Vacant Households",
+    "Percent of Persons in Dense Housing"
+]
 
 for col, desc in zip(housing_cols, housing_description):
-    fig = px.histogram(
-        df,
-        x=col,
-        nbins=30,
-        title=f"Distribution of {desc} ({col})",
-        color_discrete_sequence=["#1f77b4"],
-        opacity=0.7
-    )
-    fig.update_traces(marker=dict(line=dict(width=1, color="black")))
-    fig.update_layout(
-        bargap=0.05,
-        xaxis_title=col,
-        yaxis_title="Count",
-        template="plotly_white"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    # Split layout into 2 columns
+    col1, col2 = st.columns(2)
+
+    # --- Histogram ---
+    with col1:
+        fig_hist = px.histogram(
+            df,
+            x=col,
+            nbins=30,
+            title=f"Distribution of {col}",
+            color_discrete_sequence=["#1f77b4"],
+            opacity=0.7
+        )
+        fig_hist.update_traces(marker=dict(line=dict(width=1, color="black")))
+        fig_hist.update_layout(
+            bargap=0.05,
+            xaxis_title=desc,
+            yaxis_title="Count",
+            template="plotly_white"
+        )
+        st.plotly_chart(fig_hist, use_container_width=True)
+
+    # --- Scatter with regression line ---
+    with col2:
+        fig_scatter = px.scatter(
+            df,
+            x=col,
+            y="ViolentCrimesPerPop",
+            opacity=0.5,
+            trendline="ols",
+            trendline_color_override="skyblue"
+        )
+        fig_scatter.update_traces(marker=dict(size=5))
+        fig_scatter.update_layout(
+            title=f"{col} vs ViolentCrimesPerPop",
+            xaxis_title=desc,
+            yaxis_title="ViolentCrimesPerPop",
+            template="plotly_white"
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True)
+
+
+    # Load the model
+model = pickle.load(open("model/SVM_classifier.pkl", "rb"))
+
+feature_names = model.feature_names_in_
+print(feature_names)
+X = df[feature_names]
+y = df["ViolentCrimesPerPop"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
 st.subheader("📈 Model Insights")
 st.write("### Feature Importance")
-if hasattr(model, 'feature_importances_'):
-    try:
-        feature_names = [
-            "PctPersDenseHous", "PctKids2Par", "HousVacant", "racepctblack", 
-            "PctIlleg"
-        ]
-        importances = model.feature_importances_
-        print(importances)
-        fi = pd.DataFrame({"Feature": feature_names, "Importance": importances})
-        fi = fi.sort_values("Importance", ascending=False)
+try:
+    result = permutation_importance(
+        model, X_test, y_test, n_repeats=10, random_state=42, n_jobs=-1
+    )
 
-        fig, ax = plt.subplots()
-        sns.barplot(data=fi, x="Importance", y="Feature", ax=ax)
-        st.pyplot(fig)
-    except Exception as e:
-        st.warning(f"⚠️ Could not compute feature importance: {str(e)}")
-else:
-    st.warning("⚠️ This model does not provide feature importance.")
+    fi = pd.DataFrame({
+        "Feature": X_test.columns,
+        "Importance": result.importances_mean
+    }).sort_values("Importance", ascending=False)
+
+    fig, ax = plt.subplots()
+    sns.barplot(data=fi, x="Importance", y="Feature", ax=ax)
+    st.pyplot(fig)
+
+except Exception as e:
+    st.warning(f"⚠️ Could not compute permutation importance: {str(e)}")
 
 
 st.write("### 🔍 Explore What-if Scenarios")
@@ -232,28 +290,19 @@ HousVacant = st.slider("Number of vacant households (HousVacant)", 0.0, 1.0, 0.0
 
 # Put into DataFrame for prediction
 X_new = pd.DataFrame([[
-    PctPersDenseHous,
     PctKids2Par,
-    HousVacant,
     racepctblack,
+    PctPersDenseHous,
+    HousVacant,
     PctIlleg,
 ]], columns=[
-    "PctPersDenseHous",
     "PctKids2Par",
-    "HousVacant",
     "racepctblack",
+    "PctPersDenseHous",
+    "HousVacant",
     "PctIlleg",
 ])
 
 if st.button("Predict"):
     pred = model.predict(X_new)[0]
     st.success(f"🔮 Predicted Violent Crime Rate: **{pred * 100:.2f}%**")
-
-st.write("### 📝 Summary & Recommendations")
-st.markdown("""
-- **Higher % of kids in two-parent households (PctKids2Par) → lower violent crime risk.**  
-- **Higher % of persons in dense housing (PctPersDenseHous) → potential increase in violent crime.**  
-- **Higher % of kids born to unmarried parents (PctIlleg) → associated with higher violent crime risk.**  
-- **Higher % of African American population (racepctblack) → may correlate with crime in the dataset, but be cautious as this may reflect systemic bias rather than true causation.**  
-- **More vacant households (HousVacant) → higher violent crime risk.**  
-""")

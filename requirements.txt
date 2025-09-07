@@ -4,3 +4,6 @@ pandas
 matplotlib
 seaborn
 plotly
+numpy
+scipy
+# pip freeze > requirement.txt: freeze each of the library version

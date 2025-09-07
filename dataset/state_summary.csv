@@ -1,0 +1,47 @@
+state,statename,full state name,population,racePctWhite,racepctblack,ViolentCrimesPerPop
+1,AL, Alabama,1686941,0.59,0.47,0.39
+2,AK, Alaska,283932,0.67,0.13,0.24
+4,AZ, Arizona,2516233,0.77,0.05,0.23
+5,AR, Arkansas,816863,0.68,0.37,0.28
+6,CA, California,21957110,0.58,0.1,0.33
+8,CO, Colorado,1935534,0.85,0.04,0.22
+9,CT, Connecticut,2465213,0.87,0.11,0.11
+10,DE, Delaware,27630,0.47,0.6,0.37
+11,DC,Washington D.C.,606900,0.0,1.0,1.0
+12,FL, Florida,4594142,0.74,0.28,0.46
+13,GA, Georgia,1601370,0.43,0.66,0.38
+16,ID, Idaho,196903,0.91,0.01,0.11
+18,IN, Indiana,2371482,0.87,0.12,0.2
+19,IA, Iowa,828299,0.93,0.05,0.17
+20,KS, Kansas,304011,0.73,0.22,0.36
+21,KY, Kentucky,802721,0.84,0.19,0.28
+22,LA, Louisiana,1537451,0.47,0.62,0.5
+23,ME, Maine,375164,0.97,0.01,0.06
+24,MD, Maryland,981159,0.59,0.45,0.48
+25,MA, Massachusetts,4084199,0.93,0.04,0.18
+27,MN, Minnesota,467411,0.91,0.05,0.21
+28,MS, Mississippi,623259,0.4,0.71,0.27
+29,MO, Missouri,1546912,0.84,0.17,0.18
+32,NV, Nevada,523021,0.82,0.08,0.23
+33,NH, New Hampshire,533627,0.97,0.02,0.07
+34,NJ, New Jersey,5891576,0.77,0.18,0.16
+35,NM, New Mexico,582205,0.66,0.05,0.34
+36,NY, New York,9474916,0.77,0.21,0.25
+37,NC, North Carolina,2049543,0.53,0.56,0.4
+38,ND, North Dakota,264422,0.96,0.01,0.04
+39,OH, Ohio,4565967,0.86,0.15,0.16
+40,OK, Oklahoma,1727382,0.76,0.13,0.2
+41,OR, Oregon,1329209,0.9,0.02,0.15
+42,PA, Pennsylvania,4247131,0.88,0.12,0.13
+44,RI, Rhode Island,890242,0.92,0.04,0.14
+45,SC, South Carolina,791754,0.55,0.53,0.49
+46,SD, South Dakota,262158,0.93,0.01,0.09
+47,TN, Tennessee,1685221,0.77,0.27,0.3
+48,TX, Texas,8786559,0.67,0.19,0.26
+49,UT, Utah,809808,0.92,0.01,0.1
+50,VT, Vermont,84897,0.97,0.01,0.05
+51,VA, Virginia,2216217,0.64,0.4,0.21
+53,WA, Washington,1943157,0.82,0.05,0.23
+54,WV, West Virginia,347532,0.87,0.15,0.18
+55,WI, Wisconsin,2421081,0.94,0.04,0.07
+56,WY, Wyoming,150894,0.92,0.02,0.12
