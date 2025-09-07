@@ -119,8 +119,8 @@ x_range = np.linspace(0, max(x_white.max(), x_black.max()), 200)
 trace_white = go.Scatter(
     x=x_range,
     y=kde_white(x_range),
-    fill='tozeroy',             # fill area under the curve
-    fillcolor='rgba(13,71,161,0.5)',  # blue with 50% transparency
+    fill='tozeroy',             
+    fillcolor='rgba(13,71,161,0.5)',  
     line=dict(color='rgba(13,71,161,1)'),
     name='racePctWhite'
 )
@@ -129,7 +129,7 @@ trace_black = go.Scatter(
     x=x_range,
     y=kde_black(x_range),
     fill='tozeroy', 
-    fillcolor='rgba(135,206,235,0.5)',  # light blue / purple-like color
+    fillcolor='rgba(135,206,235,0.5)',  
     line=dict(color='rgba(135,206,235,1)'),
     name='racepctblack'
 )
@@ -154,7 +154,6 @@ socio_description = ["Percentage of Kids Born to Never Married",
                      "Percentage of Kids in with Two Parents"]
 
 for col, desc in zip(socio_cols, socio_description):
-    # Streamlit layout with 2 columns side by side
     col1, col2 = st.columns(2)
 
     # --- Histogram ---
@@ -183,7 +182,7 @@ for col, desc in zip(socio_cols, socio_description):
             x=col,
             y="ViolentCrimesPerPop",
             opacity=0.5,
-            trendline="ols",  # regression line
+            trendline="ols", 
             trendline_color_override="skyblue"
         )
         fig_scatter.update_traces(marker=dict(size=5))
@@ -204,7 +203,6 @@ housing_description = [
 ]
 
 for col, desc in zip(housing_cols, housing_description):
-    # Split layout into 2 columns
     col1, col2 = st.columns(2)
 
     # --- Histogram ---

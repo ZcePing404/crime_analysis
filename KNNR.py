@@ -1,5 +1,3 @@
-from sklearn.svm import SVR
-
 import learning_curve
 import train_model
 from sklearn.neighbors import KNeighborsRegressor

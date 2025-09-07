@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import feature_selection as fs
 from ucimlrepo import fetch_ucirepo
 
 def remove_unuseful(df):
